@@ -1,6 +1,7 @@
 import type { WindowSelector } from './windows.js'
+import type { FolderToAdd } from './workspace-file.js'
 
-/** 三条命令的参数校验：认不出的键直接报错，不静默忽略 */
+/** 各命令的参数校验：认不出的键直接报错，不静默忽略 */
 
 export interface ExecArgs {
   command: string
@@ -50,4 +51,61 @@ export function parseCommandsArgs(raw: unknown): CommandsArgs {
 
 export function parseNoArgs(commandName: string, raw: unknown): void {
   objectArgs(commandName, raw, [])
+}
+
+export interface BrowseArgs {
+  url: string
+  window: WindowSelector | undefined
+}
+
+export function parseBrowseArgs(raw: unknown): BrowseArgs {
+  const obj = objectArgs('vscode.browse', raw, ['url', 'window'])
+  const { url } = obj
+  if (typeof url !== 'string') throw new Error('vscode.browse 缺 url')
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new Error(`vscode.browse 的 url 不是合法地址：${url}`)
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error(`vscode.browse 只开 http / https 地址，收到 ${parsed.protocol}`)
+  return { url, window: windowSelector('vscode.browse', obj['window']) }
+}
+
+function requireWorkspaceFile(commandName: string, file: unknown): string {
+  if (typeof file !== 'string' || file === '') throw new Error(`${commandName} 缺 file：.code-workspace 文件的绝对路径`)
+  return file
+}
+
+export function parseWorkspaceFileReadArgs(raw: unknown): { file: string } {
+  const obj = objectArgs('vscode.workspace-file.read', raw, ['file'])
+  return { file: requireWorkspaceFile('vscode.workspace-file.read', obj['file']) }
+}
+
+export function parseWorkspaceFileAddArgs(raw: unknown): { file: string; folders: FolderToAdd[] } {
+  const commandName = 'vscode.workspace-file.add'
+  const obj = objectArgs(commandName, raw, ['file', 'folders'])
+  const { folders } = obj
+  if (!Array.isArray(folders) || folders.length === 0) throw new Error(`${commandName} 的 folders 要是非空数组 [{ path, name? }]`)
+  const parsed = folders.map((folder: unknown, index): FolderToAdd => {
+    if (!isRecord(folder)) throw new Error(`${commandName} 的 folders[${index}] 要是对象 { path, name? }`)
+    const unknownKeys = Object.keys(folder).filter((key) => key !== 'path' && key !== 'name')
+    if (unknownKeys.length > 0) throw new Error(`${commandName} 的 folders[${index}] 不认识 ${unknownKeys.join('、')}`)
+    const { path, name } = folder
+    if (typeof path !== 'string' || path === '') throw new Error(`${commandName} 的 folders[${index}].path 要是非空字符串`)
+    if (name === undefined) return { path }
+    if (typeof name !== 'string' || name === '') throw new Error(`${commandName} 的 folders[${index}].name 要是非空字符串`)
+    return { path, name }
+  })
+  return { file: requireWorkspaceFile(commandName, obj['file']), folders: parsed }
+}
+
+export function parseWorkspaceFileRemoveArgs(raw: unknown): { file: string; paths: string[] } {
+  const commandName = 'vscode.workspace-file.remove'
+  const obj = objectArgs(commandName, raw, ['file', 'paths'])
+  const { paths } = obj
+  if (!Array.isArray(paths) || paths.length === 0 || !paths.every((p) => typeof p === 'string' && p !== '')) {
+    throw new Error(`${commandName} 的 paths 要是非空字符串的非空数组`)
+  }
+  return { file: requireWorkspaceFile(commandName, obj['file']), paths: paths as string[] }
 }

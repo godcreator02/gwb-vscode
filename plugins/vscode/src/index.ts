@@ -4,8 +4,17 @@ import type { GwbContext } from '@godcreator/gwb-kernel-desktop'
 import type {} from '@godcreator/gwb-commands'
 import type {} from '@godcreator/gwb-data'
 import type {} from '@godcreator/gwb-skills'
-import { parseCommandsArgs, parseExecArgs, parseNoArgs } from './args.js'
+import {
+  parseBrowseArgs,
+  parseCommandsArgs,
+  parseExecArgs,
+  parseNoArgs,
+  parseWorkspaceFileAddArgs,
+  parseWorkspaceFileReadArgs,
+  parseWorkspaceFileRemoveArgs,
+} from './args.js'
 import { WINDOWS_SUBDIR, callWindow, pickWindow, readLiveWindows, summarizeWindow } from './windows.js'
+import { addFolders, readWorkspaceFile, removeFolders } from './workspace-file.js'
 
 export const name = 'gwb-vscode'
 
@@ -64,6 +73,66 @@ export function apply(ctx: GwbContext): void {
       const needle = q?.toLowerCase()
       const filtered = needle === undefined ? payload.commands : payload.commands.filter((id) => id.toLowerCase().includes(needle))
       return { ok: true, data: { window: { pid: target.pid, name: target.name }, commands: filtered } }
+    },
+  )
+
+  commands.register(
+    {
+      name: 'vscode.browse',
+      description: '在一个 VS Code 窗口的内置浏览器（Simple Browser）里打开网页',
+      usage:
+        '参数 { url: string, window?: number | string }。url 只收 http / https；window 同 vscode.exec。' +
+        '服务进程由调用方自己启动和停止，本命令只负责打开页面。回执同 vscode.exec',
+    },
+    async (raw) => {
+      const { url, window } = parseBrowseArgs(raw)
+      const target = pickWindow(readLiveWindows(windowsDir), window)
+      const payload = await callWindow(target, 'POST', '/exec', { command: 'simpleBrowser.show', args: [url] })
+      log.info(`在 pid ${target.pid} 窗口的内置浏览器打开 ${url}`)
+      return { ok: true, data: { window: { pid: target.pid, name: target.name }, ...(payload as Record<string, unknown>) } }
+    },
+  )
+
+  commands.register(
+    {
+      name: 'vscode.workspace-file.read',
+      description: '读一个 .code-workspace 文件里的文件夹列表',
+      usage:
+        '参数 { file: string }——.code-workspace 文件的绝对路径。回 { file, folders: [{ written, uri, absolutePath, name, exists }] }：' +
+        'written 是文件里写的原文，absolutePath 按工作区文件所在目录解析；uri 形式登记的 written 与 absolutePath 为 null',
+    },
+    (raw) => ({ ok: true, data: readWorkspaceFile(parseWorkspaceFileReadArgs(raw).file) }),
+  )
+
+  commands.register(
+    {
+      name: 'vscode.workspace-file.add',
+      description: '往一个 .code-workspace 文件的 folders 末尾添加文件夹，保留原文的注释与排版',
+      usage:
+        '参数 { file: string, folders: [{ path: string, name?: string }] }。path 是已存在目录的绝对路径，写进文件时换成相对工作区文件的路径；' +
+        '已在工作区里的、不存在的目录直接报错，整批不写。开着这个工作区的 VS Code 窗口会自己刷新。回执同 vscode.workspace-file.read',
+    },
+    (raw) => {
+      const { file, folders } = parseWorkspaceFileAddArgs(raw)
+      const view = addFolders(file, folders)
+      log.info(`${file} 添加 ${folders.map((f) => f.path).join('、')}`)
+      return { ok: true, data: view }
+    },
+  )
+
+  commands.register(
+    {
+      name: 'vscode.workspace-file.remove',
+      description: '从一个 .code-workspace 文件的 folders 里移除文件夹，保留原文的注释与排版',
+      usage:
+        '参数 { file: string, paths: string[] }。paths 是要移除文件夹的绝对路径，与文件里的条目按解析后的路径比较；' +
+        '有一个不在工作区里就报错，整批不写。回执同 vscode.workspace-file.read',
+    },
+    (raw) => {
+      const { file, paths } = parseWorkspaceFileRemoveArgs(raw)
+      const view = removeFolders(file, paths)
+      log.info(`${file} 移除 ${paths.join('、')}`)
+      return { ok: true, data: view }
     },
   )
 

@@ -3,8 +3,9 @@
 让 gwb 工作台在开着的 VS Code 窗口里执行任意 VS Code 命令（新建终端、开关面板、打开文件、状态栏按钮背后的命令……）。
 仓是 pnpm workspace，放两个包：
 
-- `plugins/vscode/`：gwb 插件 `@godcreator/gwb-vscode`，命令 `vscode.windows` / `vscode.exec` / `vscode.commands`，
-  说明书 `vscode`（`skill.read {"name":"vscode"}`）
+- `plugins/vscode/`：gwb 插件 `@godcreator/gwb-vscode`，说明书 `vscode`（`skill.read {"name":"vscode"}`）。
+  经扩展操作窗口：`vscode.windows` / `vscode.exec` / `vscode.commands` / `vscode.browse`（内置浏览器打开网页）；
+  直接读写 `.code-workspace` 文件：`vscode.workspace-file.read` / `.add` / `.remove`
 - `extension/`：VS Code 扩展 `gwb-vscode`。每个窗口启动时开一个 `127.0.0.1` 随机端口、生成 token，
   把 `{ pid, port, token, name, folders, startedAt }` 写进 `%APPDATA%\gwb-kernel\homes\<home>\data\vscode\windows\<pid>.json`，
   窗口关闭时删掉；接口 `POST /exec {command, args}` 与 `GET /commands`，请求头要带 `Authorization: Bearer <token>`

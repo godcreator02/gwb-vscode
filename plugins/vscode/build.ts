@@ -29,6 +29,8 @@ await build({
   external: nodeSideExternals(),
   format: 'esm',
   platform: 'node',
+  // node 平台默认先取 main：jsonc-parser 的 main 是 UMD，里面按相对路径动态 require，打包后运行时找不到
+  mainFields: ['module', 'main'],
   target: 'node22',
   bundle: true,
   minify: false,
