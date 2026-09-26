@@ -59,7 +59,7 @@ VS Code 里每个动作（菜单项、快捷键、状态栏按钮、命令面板
 | 在资源管理器里定位文件 | `revealInExplorer` | `[{"$uri": "..."}]` |
 | 在新窗口打开文件夹或工作区文件 | `vscode.openFolder` | `[{"$uri": "..."}, {"forceNewWindow": true}]` |
 | 保存全部 | `workbench.action.files.saveAll` | |
-| 重新加载窗口 | `workbench.action.reloadWindow` | 执行后这次调用可能收不到回执 |
+| 重新加载窗口 | `workbench.action.reloadWindow` | 回执是报错 `Canceled`：执行这条命令的扩展进程随窗口重新加载被关掉了，属于正常。之后窗口换一个新 pid 重新登记，用 `vscode.windows` 确认 |
 | 关闭窗口 | `workbench.action.closeWindow` | |
 | 打开设置界面 | `workbench.action.openSettings` | `["<搜索词>"]` |
 
