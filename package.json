@@ -1,0 +1,11 @@
+{
+  "name": "gwb-vscode-workspace",
+  "private": true,
+  "type": "module",
+  "description": "gwb-vscode 的 pnpm workspace：gwb 插件在 plugins/vscode/，配套的 VS Code 扩展在 extension/。",
+  "scripts": {
+    "build": "pnpm -r --filter \"./plugins/*\" --filter \"./extension\" build",
+    "check": "pnpm -r --no-bail check"
+  },
+  "engines": { "node": ">=24" }
+}

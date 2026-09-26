@@ -1,0 +1,39 @@
+{
+  "name": "@godcreator/gwb-vscode",
+  "version": "0.1.0",
+  "description": "VS Code 桥：经配套的 VS Code 扩展，在开着的 VS Code 窗口里执行任意 VS Code 命令、列出命令 ID。命令 3 条；skill 1 份。",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": ["dist", "skills"],
+  "keywords": ["gwb-plugin"],
+  "publishConfig": { "registry": "https://git.tianshen02.online:28377/api/packages/godcreator/npm/" },
+  "scripts": {
+    "build": "node build.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "oxlint . --deny-warnings",
+    "test": "vitest run --passWithNoTests",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
+  },
+  "peerDependencies": {
+    "@godcreator/gwb-kernel-desktop": "^0.7.2",
+    "@godcreator/gwb-commands": "^0.5.2",
+    "@godcreator/gwb-data": "^0.1.9",
+    "@godcreator/gwb-skills": "^0.4.7"
+  },
+  "peerDependenciesMeta": {
+    "@godcreator/gwb-skills": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "cordis": "4.0.0-rc.10",
+    "esbuild": "^0.28.2",
+    "oxlint": "1.76.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "gwb-vscode",
+  "displayName": "gwb 桥",
+  "description": "让 gwb 工作台的插件 @godcreator/gwb-vscode 在这个窗口里执行 VS Code 命令：本机随机端口 + token，登记到 gwb home 的数据目录",
+  "version": "0.1.0",
+  "publisher": "godcreator02",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=24"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "gwb 桥",
+      "properties": {
+        "gwbVscode.home": {
+          "type": "string",
+          "default": "default",
+          "description": "登记到哪个 gwb home：登记文件写在 %APPDATA%\\gwb-kernel\\homes\\<home>\\data\\vscode\\windows\\"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "check": "pnpm run typecheck && pnpm run test",
+    "package": "pnpm check && pnpm build && vsce package --no-dependencies --allow-missing-repository",
+    "install:local": "pnpm package && code --install-extension gwb-vscode-0.1.0.vsix --force"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
