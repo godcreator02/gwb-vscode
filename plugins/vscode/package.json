@@ -13,6 +13,10 @@
   "keywords": [
     "gwb-plugin"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://git.tianshen02.online:28377/godcreator/gwb-vscode.git"
+  },
   "publishConfig": {
     "registry": "https://git.tianshen02.online:28377/api/packages/godcreator/npm/"
   },
