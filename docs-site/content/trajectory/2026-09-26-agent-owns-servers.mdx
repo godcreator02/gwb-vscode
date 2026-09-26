@@ -1,0 +1,27 @@
+---
+born-at: 2026-09-26T16:20
+type: choice
+parent: [2026-09-26-gwb-vscode]
+label: 服务归 agent
+domain: gwb 工具插件
+---
+
+## 背景
+
+用户想把功能扩展一下：「把workspace管理也加进来，然后文档站build+start或者dev就开在vscode的内置浏览器里行不行？」
+当时已有一个 VS Code 扩展 docs-site-runner 在做文档站的 build + start、内置浏览器打开、到点自动关，只是没有 dev 模式，站目录传错时弹选择框而不是报错。
+工作区管理有两种做法：调 `updateWorkspaceFolders` 改开着的窗口，或直接读写 `.code-workspace` 文件。
+
+## 候选
+
+文档站一块：改 docs-site-runner 补 dev 模式；把它并进 gwb-vscode 扩展；gwb 插件自己启动服务再打开浏览器；服务由 agent 自己启动，VS Code 只负责看。
+
+## 结论与边界
+
+用户原话：「也许不再需要doc-sitre-runner了，agent自己持有服务进程，然后vscode就单纯来看」，随后「docs-site-runner 现在就撤掉，以后都走工作区，就用文件读写就行」。
+
+于是：gwb 插件只加 `vscode.browse`，在内置浏览器里打开地址，不启动、不持有进程——进程跟着启动它的 agent 会话走，会话结束时要么一起停，
+要么由超时脚本停，工作台里不留没人管的进程。docs-site-runner 当天从 VS Code 卸载，它的单元出生证改成 `retired`，仓留着。
+
+工作区只做文件读写（`vscode.workspace-file.read` / `add` / `remove`），窗口一侧的工作区命令一条都不做：
+改动第一个文件夹时 VS Code 会重启窗口的扩展进程，这次调用收不到回执、窗口的 pid 也会变；而用户的窗口都是从工作区文件打开的，改文件 VS Code 会自己刷新。

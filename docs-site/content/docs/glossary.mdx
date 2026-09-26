@@ -1,0 +1,15 @@
+---
+title: 术语表
+description: 这个项目里反复出现的词各指什么
+---
+
+**本页回答**：这个项目里反复出现的词各指什么。
+
+| 词 | 指什么 |
+| --- | --- |
+| 登记文件 | 一个 VS Code 窗口的扩展写下的 `<pid>.json`：端口、token、工作区名、文件夹、启动时刻 |
+| 登记目录 | 放登记文件的目录，gwb-data 分给条目 `vscode` 的数据目录下的 `windows/` |
+| 命令 ID | VS Code 里一个动作的名字，如 `workbench.action.terminal.new`；`executeCommand` 按它调用 |
+| `settled` | 回执里的一项：`true` 是命令在等待上限内结束了，`false` 是还没结束、结果只记在窗口的输出通道 |
+| 工作区文件 | `.code-workspace` 文件，JSONC 格式，`folders` 里是这个工作区的文件夹 |
+| 内置浏览器 | VS Code 自带的 Simple Browser，命令 `simpleBrowser.show` 打开 |

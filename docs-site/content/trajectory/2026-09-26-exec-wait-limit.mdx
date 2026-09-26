@@ -1,0 +1,23 @@
+---
+born-at: 2026-09-26T16:10
+type: evidence
+parent: [2026-09-26-gwb-vscode]
+label: 命令等 10 秒
+domain: gwb 工具插件
+---
+
+## 背景
+
+第一版扩展一直等 `executeCommand` 的 promise 结束才回执。在隔离 home 里验证时，对 dev 窗口执行 `workbench.action.terminal.new`，
+`devkit.cdp` 等了 60 秒超时；绕过插件直接调扩展接口，等了 90 秒也没回。同一个窗口里 `workbench.action.togglePanel` 179 毫秒就回了。
+
+## 依据
+
+那段时间没有任何父进程是 `Code.exe` 的 shell 被启动；截屏上看不到 VS Code 窗口（不在当前屏幕上）。另开一个新窗口（在前台）执行同一条命令，
+263 毫秒回执，随即出现一个父进程是 `Code.exe` 的 `pwsh.exe`。所以是窗口不在屏幕上时终端建不出来，命令的 promise 就一直不结束，不是转发出了问题。
+复现的命令记录在本会话里，没有单独的 probes 目录。
+
+## 结论与边界
+
+扩展最多等 10 秒，过了先回 `settled: false`，命令本身不取消，最后成没成写进窗口的输出通道「gwb-vscode」。说明书告诉 agent 遇到时请用户切到那个窗口、
+别重复发。没有做成可调的参数：目前只有这一种会卡住的情形，等出现需要更长等待的命令再说。

@@ -1,0 +1,74 @@
+---
+title: 命令
+description: vscode.* 各条命令的参数与回执，扩展 HTTP 接口与登记文件的形状
+---
+
+**本页回答**：每条命令收什么、回什么；扩展的 HTTP 接口与登记文件长什么样。参数以登记时的 `usage` 为准，这里讲形状背后的取舍。
+
+## 经扩展操作窗口
+
+| 命令 | 参数 | 回执 `data` |
+| --- | --- | --- |
+| `vscode.windows` | 无参数 | `{ windows: [{ pid, name, folders, startedAt }] }` |
+| `vscode.exec` | `{ command, args?, window? }` | `{ window: { pid, name }, settled, result, resultNotSerializable? }` |
+| `vscode.commands` | `{ q?, window? }` | `{ window: { pid, name }, commands: string[] }` |
+| `vscode.browse` | `{ url, window? }` | 同 `vscode.exec` |
+
+`window` 是 pid（整数）或工作区名（与 `vscode.windows` 回的 `name` 完全相等），只开一个窗口时可省。`name` 是 VS Code 给的
+`workspace.name`：从工作区文件打开时形如 `dev (Workspace)`，只开一个文件夹时是文件夹名，空窗口为 `null`。
+
+`vscode.commands` 的子串过滤在插件里做：扩展每次回全部命令 ID（几千条，已去掉下划线开头的内部命令），插件按 `q` 不分大小写过滤。
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.windows'," */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.exec'," */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.commands'," */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.browse'," */}
+
+## 读写工作区文件
+
+| 命令 | 参数 | 回执 `data` |
+| --- | --- | --- |
+| `vscode.workspace-file.read` | `{ file }` | `{ file, folders: [{ written, uri, absolutePath, name, exists }] }` |
+| `vscode.workspace-file.add` | `{ file, folders: [{ path, name? }] }` | 同 `read`，是写完之后的样子 |
+| `vscode.workspace-file.remove` | `{ file, paths }` | 同 `read` |
+
+`file` 是 `.code-workspace` 文件的绝对路径。`written` 是文件里写的原文，`absolutePath` 按工作区文件所在目录解析；用 `uri` 登记的条目（远程文件夹之类）
+`written` 与 `absolutePath` 为 `null`、`exists` 为 `false`，只能读、不能按路径移除。移除按解析后的绝对路径比较，Windows 上不分大小写。
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.read'," */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.add'," */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.remove'," */}
+
+## 扩展的 HTTP 接口
+
+| 接口 | 请求体 | 成功 | 失败 |
+| --- | --- | --- | --- |
+| `POST /exec` | `{ command, args? }`，不超过 1 MB | 200 `{ settled, result, resultNotSerializable? }` | 400 请求体不对、500 命令抛错，都带 `{ error }` |
+| `GET /commands` | 无 | 200 `{ commands }` | — |
+
+两个接口都要 `Authorization: Bearer <token>`，不对回 401；别的路径回 404。
+
+## 登记文件
+
+`<home>/data/vscode/windows/<pid>.json`：
+
+```json
+{
+  "pid": 35776,
+  "port": 54091,
+  "token": "<48 位十六进制>",
+  "name": "dev (Workspace)",
+  "folders": ["d:\\unitfolders\\igldu-gwbkernel\\gwb-kernel"],
+  "startedAt": "2026-09-26T08:01:41.392Z"
+}
+```
+
+两边各有一份这个形状的定义，插件那份读的时候逐字段校验：
+
+@@docfirst ref ../extension/src/protocol.ts:14-21 @@
+@@docfirst ref ../plugins/vscode/src/windows.ts:36-49 @@

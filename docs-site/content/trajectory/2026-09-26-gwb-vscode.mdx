@@ -1,0 +1,21 @@
+---
+born-at: 2026-09-26T15:55
+type: root
+label: VS Code 桥
+domain: gwb 工具插件
+---
+
+## 背景
+
+用户问：「有没有办法能够从你这，直接操作vscode里的内置的命令？比如vscode里打开个窗格，新建个终端，底部状态栏按钮对应的命令调用一下啥的？」
+VS Code 自己不提供从进程外调用任意命令的入口：`code` 命令行只能打开文件、对比、装扩展；`vscode://` 链接只有注册了处理的扩展才响应；
+computer-use 对 IDE 只给点击权限，不能打字、不能按快捷键。能调任意命令的只有扩展进程里的 `vscode.commands.executeCommand`。
+
+## 结论与边界
+
+在 VS Code 里放一个扩展接收外部请求，在工作台里放一个 gwb 插件给 agent 用，两者靠登记文件与 HTTP 连起来。
+同一天加上了在内置浏览器里打开网页、读写 `.code-workspace` 文件，并撤掉了原来专管文档站的 VS Code 扩展 docs-site-runner。
+
+## 里程碑
+
+- 2026-09-26｜建仓：扩展加 gwb 插件｜VS Code 扩展开本机端口执行命令，gwb 插件读登记目录选窗口转发；同日加内置浏览器与工作区文件读写。

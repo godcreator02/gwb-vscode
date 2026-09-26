@@ -1,0 +1,54 @@
+---
+title: 插件之间怎么连
+description: gwb-vscode 提供的命令与说明书，注入的服务与 peer 写法，按名字调用与约定通道
+---
+
+**本页回答**：本仓插件提供哪些命令与说明书；注入了哪些服务、是必需还是局部注入、peer 怎么写；和 VS Code 扩展、别的程序靠哪些约定通道连着。
+
+## @godcreator/gwb-vscode
+
+### 提供
+
+| 类别 | 名字 | 说明 |
+| --- | --- | --- |
+| 命令 | `vscode.windows` / `exec` / `commands` / `browse` | 经 VS Code 扩展操作窗口，形状见[命令](/docs/commands) |
+| 命令 | `vscode.workspace-file.read` / `add` / `remove` | 直接读写 `.code-workspace` 文件 |
+| 说明书 | `vscode` | 包根 `skills/vscode/`，经 `gwbSkills.register` 登记 |
+
+不提供服务、不注册窗格、不声明设置项。
+
+### 注入
+
+| 服务 | 提供方包 | 必需 / 局部注入 | peer 写法 | 用来做什么 | 缺了会怎样 |
+| --- | --- | --- | --- | --- | --- |
+| `gwbCommands` | `@godcreator/gwb-commands` | 必需（顶层 `inject`） | `^0.5.2` | 登记命令 | 插件不加载 |
+| `gwbData` | `@godcreator/gwb-data` | 必需（顶层 `inject`） | `^0.1.9` | 取数据目录 `dir`，登记目录在它下面 | 插件不加载 |
+| `gwbSkills` | `@godcreator/gwb-skills` | 局部注入 | `^0.4.7`，可选 | 登记说明书 `vscode` | 照常加载；agent 读不到说明书 |
+
+内核包 `@godcreator/gwb-kernel-desktop`（`^0.7.2`）只提供接口类型。`jsonc-parser` 打包进产物，不是 peer。
+
+{/* has file="../plugins/vscode/src/index.ts" text="export const inject = ['gwbCommands', 'gwbData']" */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="ctx.inject(['gwbSkills'], (scoped) => {" */}
+
+{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-commands&quot;: &quot;^0.5.2&quot;" */}
+
+{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-data&quot;: &quot;^0.1.9&quot;" */}
+
+{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-skills&quot;: &quot;^0.4.7&quot;" */}
+
+{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-kernel-desktop&quot;: &quot;^0.7.2&quot;" */}
+
+### 按名字调用与约定通道
+
+| 通道 | 对方 | 名字 | 用来做什么 |
+| --- | --- | --- | --- |
+| 磁盘文件 | VS Code 扩展 `gwb-vscode` | `<home>/data/vscode/windows/<pid>.json` | 扩展写、插件读：窗口的端口与 token |
+| 共享 id | VS Code 扩展 `gwb-vscode` | 条目 id `vscode`（数据目录名） | 扩展按它拼出登记目录；条目 id 改了登记就落到插件读不到的地方 |
+| HTTP | VS Code 扩展 `gwb-vscode` | `POST /exec`、`GET /commands` | 执行命令、列命令 ID |
+| VS Code 命令 | VS Code 内置 | `simpleBrowser.show` | `vscode.browse` 经 `/exec` 调它 |
+| 磁盘文件 | 人、VS Code | `.code-workspace` | 插件直接改 `folders`，VS Code 察觉变化后刷新 |
+
+{/* has file="../plugins/vscode/src/windows.ts" text="export const WINDOWS_SUBDIR = 'windows'" */}
+
+{/* has file="../plugins/vscode/src/index.ts" text="command: 'simpleBrowser.show'" */}

@@ -1,0 +1,17 @@
+---
+born-at: 2026-09-26T16:24
+parent: [2026-09-26-gwb-vscode]
+label: 打包取 module
+domain: gwb 工具插件
+---
+
+## 背景
+
+加了 jsonc-parser 之后 `pnpm check` 全绿，`devkit.dev` 装进隔离 home 却加载失败，日志里是 `Dynamic require of "./impl/format" is not supported`。
+
+## 结论与边界
+
+esbuild 在 `platform: 'node'` 下默认先取包的 `main` 字段，jsonc-parser 的 `main` 是 UMD 版本，里面按相对路径在运行时 `require` 子模块，打包成一个文件之后这些路径就不存在了。
+构建脚本加 `mainFields: ['module', 'main']` 改取 ESM 版本后加载正常（commit dbda6ce）。
+
+单元测试直接 import 源码，测不出打包之后的问题；这类问题只有装进 home 才报，所以写进了 AGENTS 的「怎么跑」。

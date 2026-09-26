@@ -1,0 +1,141 @@
+---
+title: gwb-vscode
+description: 让 gwb 工作台在开着的 VS Code 窗口里执行任意命令、在内置浏览器里打开网页，并直接读写 .code-workspace 文件。本页按接缝讲 gwb 插件、VS Code 扩展、磁盘三者怎么连
+---
+
+**本页回答**：这个仓做什么、由哪两个包组成、它们和 agent、VS Code、磁盘之间的每条接缝传什么、由谁负责、怎么测，以及它刻意不做什么。
+
+VS Code 里每个动作——菜单项、快捷键、状态栏按钮、命令面板里的一条——背后都是一条带 ID 的命令，扩展进程里调
+`vscode.commands.executeCommand(ID, ...args)` 就能触发。VS Code 自己不提供从进程外调用命令的入口，所以这个仓在两头各放一个包：
+
+- **VS Code 扩展 `gwb-vscode`**（`extension/`）：每个窗口启动时开一个 `127.0.0.1` 随机端口，收到带 token 的请求就执行命令；
+  端口与 token 写进 gwb home 的数据目录，窗口关闭时删掉
+- **gwb 插件 `@godcreator/gwb-vscode`**（`plugins/vscode/`，入口 `src/index.ts`）：给 agent 一组 `vscode.*` 命令，按 pid 或工作区名选窗口、
+  把请求转给那个窗口的扩展；另外直接读写 `.code-workspace` 文件的文件夹列表，这部分不需要 VS Code 开着
+
+两个包之间没有 import 关系，只靠登记文件的形状与 HTTP 接口连起来，这两样是契约。
+
+## 接缝图
+
+<VscodeSeams />
+
+## 接缝逐条
+
+### 1 agent → 插件
+
+agent 经 MCP 入口 `run` 调 `vscode.*` 命令，每条命令的参数形状写在登记时的 `usage` 里（MCP 入口的 `search` 列出来）。
+参数只在这一层校验：认不出的键、类型不对直接报错，不猜、不纠正——`window` 写的工作区名差一个字也不匹配。
+测试：`tests/args.test.ts`。
+
+### 2 扩展 ⇢ 登记目录
+
+登记目录就是 gwb-data 分给插件条目 `vscode` 的数据目录下的 `windows/`。扩展不在工作台进程里，拿不到 gwb-data 的接口，所以按条目 id 自己拼出这条路径；
+home 名来自扩展设置 `gwbVscode.home`（默认 `default`）。条目 id 因此是这条接缝的一部分，改了它登记就落到插件读不到的地方：
+
+{/* ref file="../extension/src/protocol.ts" lines="9-12" hash="a960283d0fc4" blob="866ca1054573" */}
+
+扩展每次都整份重写登记文件：先写临时文件再改名，插件读到的要么是旧的要么是新的，不会是写了一半的。工作区文件夹变了、`gwbVscode.home` 改了都重写一次，
+改了 home 就先删掉旧 home 里那份：
+
+{/* ref file="../extension/src/extension.ts" lines="56-69" hash="3782cf14c492" blob="71d915eaecdb" */}
+
+pid 取的是扩展进程自己的 pid，一个窗口一个。窗口正常关闭时 `deactivate` 删文件；崩溃来不及删的由第 3 条清掉。
+测试：`extension/tests/protocol.test.ts` 覆盖路径拼法；写文件与删文件没有自动测试，装进 VS Code 后开关窗口看目录。
+
+### 3 插件 ⇢ 登记目录
+
+插件每次调用都现读整个目录，不缓存：窗口随时开关，缓存要回答「谁来失效」，现读一个目录只要几毫秒。登记文件字段不对直接报错（人手改坏了就该看见）；
+进程已经不在的登记当场删掉——这是崩溃窗口留下的唯一清理点：
+
+{/* ref file="../plugins/vscode/src/windows.ts" lines="60-75" hash="980bc4d68f29" blob="72ff36e2b20e" */}
+
+选窗口只认 pid 与完整的工作区名，开了多个窗口却没指定就报错并列出全部窗口，不替调用方挑一个：
+
+{/* ref file="../plugins/vscode/src/windows.ts" lines="85-98" hash="6ac3e7cc91f9" blob="72ff36e2b20e" */}
+
+测试：`tests/windows.test.ts` 在临时目录里放登记文件，覆盖排序、清掉过期登记、字段错误、各种选窗口的情形。
+
+### 4 插件 → 扩展（HTTP）
+
+只有两个接口：`POST /exec {command, args}` 执行命令，`GET /commands` 列出命令 ID；请求头必须带 `Authorization: Bearer <token>`，
+token 只写在登记文件里，所以本机别的程序拿不到它就调不动这个端口。扩展回的非 2xx 带 `{ error }`，插件原样转成异常，报错里带上是哪个窗口：
+
+{/* ref file="../plugins/vscode/src/windows.ts" lines="100-119" hash="0532bdb2afb6" blob="72ff36e2b20e" */}
+
+扩展这边的路由与鉴权：
+
+{/* ref file="../extension/src/extension.ts" lines="121-136" hash="555213d5c9c3" blob="71d915eaecdb" */}
+
+**命令最多等 10 秒**。有的命令要等窗口显示出来才结束：窗口最小化或在别的虚拟桌面时新建终端，命令一直不结束，也不启动 shell 进程。
+过了上限扩展先回 `settled: false`，命令本身不取消，最后成没成记进那个窗口的输出通道「gwb-vscode」。来历见轨迹卡
+[「命令最多等 10 秒」](/trajectory/2026-09-26-exec-wait-limit)：
+
+{/* ref file="../extension/src/protocol.ts" lines="55-74" hash="fb2550dcf4c6" blob="866ca1054573" */}
+
+测试：`extension/tests/protocol.test.ts` 覆盖请求体校验、等待上限、响应体；端到端在隔离 home 里用 `devkit.cdp` 调命令看回执。
+
+### 5 扩展 → VS Code
+
+请求体只能是 JSON，而不少命令要 `Uri` 参数，所以约定 `{"$uri": "<绝对路径>"}` 这一种写法，扩展换成 `vscode.Uri.file(路径)`；
+只认恰好一个 `$uri` 键的对象，别的对象原样交给命令：
+
+{/* ref file="../extension/src/protocol.ts" lines="42-53" hash="1adb6c596da7" blob="866ca1054573" */}
+
+返回值按 JSON 回给插件，`undefined` 记为 `null`；循环引用这类无法序列化的，`result` 为 `null` 并带 `resultNotSerializable` 说明原因——命令已经执行过了，
+不能报成失败。命令抛错回 500，原因原样带回。测试：`extension/tests/protocol.test.ts`。
+
+### 6 插件 ⇢ 工作区文件
+
+`vscode.workspace-file.*` 直接读写 `.code-workspace`，不经过 VS Code：开着这个工作区的窗口会自己察觉文件变化并刷新文件夹列表，
+没开的时候照样能改。文件是 JSONC，可以写注释和结尾逗号，所以不用 `JSON.parse` 再整份写回，而是用 jsonc-parser 只编辑 `folders` 那一段，
+其余字节不动；新插入的条目照原文的缩进（出现过行首制表符就用制表符）：
+
+{/* ref file="../plugins/vscode/src/workspace-file.ts" lines="86-95" hash="7cf9f99753a0" blob="ce32bdb9164f" */}
+
+参数一律是绝对路径，写进文件时换成相对工作区文件所在目录的路径、用正斜杠，与 VS Code 自己写的一致。整批先全部校验再动手，
+有一个不合格（目录不存在、已经在工作区里）就一个都不写：
+
+{/* ref file="../plugins/vscode/src/workspace-file.ts" lines="109-127" hash="477cadf191e3" blob="ce32bdb9164f" */}
+
+某个工作区文件自己的约定（比如必须起中文显示名、只放仓目录）不归这里查，由调用方照那份约定填参数。
+测试：`tests/workspace-file.test.ts` 在临时目录里放带注释、制表符缩进的工作区文件，覆盖增删、保留注释与缩进、整批不写、语法错误。
+
+### 7 内置浏览器 → 本地服务
+
+`vscode.browse` 只做一件事：在指定窗口里执行 `simpleBrowser.show <url>`，地址只收 http / https。页面背后的服务（文档站的 `dev` 或 `build` + `start`）
+由 agent 用自己客户端的方式启动和停止，插件不启动进程、不记端口、不管超时：进程跟着启动它的会话走，会话结束时要么一起停，要么由超时脚本停，
+工作台里不会留下没人管的进程。来历见轨迹卡[「服务由 agent 持有」](/trajectory/2026-09-26-agent-owns-servers)。
+测试：`tests/args.test.ts` 覆盖地址校验；打开页面的效果用一个会记录请求的本地服务验过，请求头里是 VS Code 的 User-Agent。
+
+### 8 插件 → 说明书插件
+
+局部注入 `gwbSkills`，登记包里的 `skills/` 目录（相对产物写作 `'../skills/'`，所以 `skills` 在 `package.json` 的 `files` 里）。
+说明书 `vscode` 告诉 agent 什么时候用这些命令、常用命令 ID、状态栏按钮的命令 ID 去哪找、`settled: false` 怎么处理。缺了说明书插件，命令照常可用。
+
+## 各模块对外能做什么
+
+**gwb 插件**（`plugins/vscode/`）：`vscode.windows` 列出窗口；`vscode.exec` 执行任意命令；`vscode.commands` 列出命令 ID、按子串过滤；
+`vscode.browse` 在内置浏览器打开网页；`vscode.workspace-file.read` / `add` / `remove` 读写工作区文件的文件夹列表。逐条的参数与回执在
+[命令](/docs/commands)，peer 写法在[插件之间怎么连](/docs/wiring)。
+
+**VS Code 扩展**（`extension/`）：每个窗口一个 HTTP 服务、一份登记文件；设置只有 `gwbVscode.home`；输出通道「gwb-vscode」记登记、执行与超时后的结果。
+不贡献任何 VS Code 命令，不在界面上放东西。
+
+## 依赖谁
+
+| 依赖 | 用来做什么 | 缺了会怎样 |
+| --- | --- | --- |
+| 命令总线 `gwb-commands`（必需） | 登记 `vscode.*` 命令 | 插件不加载 |
+| 数据 `gwb-data`（必需） | 算出登记目录：`ctx.gwbData.dir` 下的 `windows/` | 插件不加载 |
+| 说明书 `gwb-skills`（局部注入） | 登记说明书 `vscode` | 照常加载；agent 读不到说明书 |
+| 内核包 `gwb-kernel-desktop` | 接口类型 | — |
+| VS Code 扩展 `gwb-vscode` | 窗口一侧的一切：执行命令、打开网页 | 工作区文件读写照常；别的命令一律报「没有已登记的 VS Code 窗口」 |
+
+## 不做的事
+
+- **不启动、不持有本地服务进程**：只负责在 VS Code 里打开页面（第 7 条）
+- **不操作窗口里的工作区**：增删文件夹只经工作区文件，不调 `updateWorkspaceFolders`——改动第一个文件夹会重启窗口的扩展进程，这次调用收不到回执
+- **不在新窗口打开文件夹或工作区的专门命令**：用 `vscode.exec` 调 `vscode.openFolder`
+- **不查工作区文件自己的约定**：显示名、放仓目录还是单元目录由调用方负责
+- **不列别的扩展放在状态栏上的按钮**：VS Code 没有这样的接口，说明书里写了怎么查命令 ID
+- **不替调用方挑窗口、不模糊匹配工作区名**
