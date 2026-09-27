@@ -25,7 +25,7 @@ description: gwb-vscode 提供的命令与说明书，注入的服务与 peer �
 | `gwbData` | `@godcreator/gwb-data` | 必需（顶层 `inject`） | `^0.1.9` | 取数据目录 `dir`，登记目录在它下面 | 插件不加载 |
 | `gwbSkills` | `@godcreator/gwb-skills` | 局部注入 | `^0.4.7`，可选 | 登记说明书 `vscode` | 照常加载；agent 读不到说明书 |
 
-内核包 `@godcreator/gwb-kernel-desktop`（`^0.7.2`）只提供接口类型。`jsonc-parser` 打包进产物，不是 peer。
+内核包 `@godcreator/gwb-kernel-desktop`（`^0.8.0`）只提供接口类型。`jsonc-parser` 打包进产物，不是 peer。
 
 {/* has file="../plugins/vscode/src/index.ts" text="export const inject = ['gwbCommands', 'gwbData']" */}
 
@@ -37,7 +37,7 @@ description: gwb-vscode 提供的命令与说明书，注入的服务与 peer �
 
 {/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-skills&quot;: &quot;^0.4.7&quot;" */}
 
-{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-kernel-desktop&quot;: &quot;^0.7.2&quot;" */}
+{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-kernel-desktop&quot;: &quot;^0.8.0&quot;" */}
 
 ### 按名字调用与约定通道
 
