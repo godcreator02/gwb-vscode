@@ -6,7 +6,7 @@ description: 让 gwb 工作台在开着的 VS Code 窗口里执行任意命令�
 **本页回答**：这个仓做什么、由哪两个包组成、它们和 agent、VS Code、磁盘之间的每条接缝传什么、由谁负责、怎么测，以及它刻意不做什么。
 
 VS Code 里每个动作——菜单项、快捷键、状态栏按钮、命令面板里的一条——背后都是一条带 ID 的命令，扩展进程里调
-`vscode.commands.executeCommand(ID, ...args)` 就能触发。VS Code 自己不提供从进程外调用命令的入口，所以这个仓在两头各放一个包：
+`vscode.commands.executeCommand(ID, ...args)` 就能触发。VS Code 自己不提供从进程外调用命令的入口，所以这个仓在工作台与 VS Code 两边各放一个包：
 
 - **VS Code 扩展 `gwb-vscode`**（`extension/`）：每个窗口启动时开一个 `127.0.0.1` 随机端口，收到带 token 的请求就执行命令；
   端口与 token 写进 gwb home 的数据目录，窗口关闭时删掉
@@ -58,7 +58,7 @@ pid 取的是扩展进程自己的 pid，一个窗口一个。窗口正常关闭
 ### 4 插件 → 扩展（HTTP）
 
 只有两个接口：`POST /exec {command, args}` 执行命令，`GET /commands` 列出命令 ID；请求头必须带 `Authorization: Bearer <token>`，
-token 只写在登记文件里，所以本机别的程序拿不到它就调不动这个端口。扩展回的非 2xx 带 `{ error }`，插件原样转成异常，报错里带上是哪个窗口：
+token 只写在登记文件里，所以本机别的程序拿不到它，就调用不了这个端口。扩展回的非 2xx 带 `{ error }`，插件原样转成异常，报错里带上是哪个窗口：
 
 {/* ref file="../plugins/vscode/src/windows.ts" lines="100-119" hash="0532bdb2afb6" blob="72ff36e2b20e" */}
 
@@ -103,7 +103,7 @@ token 只写在登记文件里，所以本机别的程序拿不到它就调不�
 ### 7 内置浏览器 → 本地服务
 
 `vscode.browse` 只做一件事：在指定窗口里执行 `simpleBrowser.show <url>`，地址只收 http / https。页面背后的服务（文档站的 `dev` 或 `build` + `start`）
-由 agent 用自己客户端的方式启动和停止，插件不启动进程、不记端口、不管超时：进程跟着启动它的会话走，会话结束时要么一起停，要么由超时脚本停，
+由 agent 用自己客户端的方式启动和停止，插件不启动进程、不记端口、不管超时：进程归启动它的会话管，会话结束时要么一起停，要么由超时脚本停，
 工作台里不会留下没人管的进程。来历见轨迹卡[「服务由 agent 持有」](/trajectory/2026-09-26-agent-owns-servers)。
 测试：`tests/args.test.ts` 覆盖地址校验；打开页面的效果用一个会记录请求的本地服务验过，请求头里是 VS Code 的 User-Agent。
 
