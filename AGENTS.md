@@ -23,7 +23,7 @@ gwb 插件 `@godcreator/gwb-vscode`（`plugins/vscode/`）加上配套的 VS Cod
   隔离 home 里验证窗口命令时，把 default 里的登记文件复制进那个 home 的 `data/vscode/windows/`，或把 `gwbVscode.home` 指过去
 - 插件的构建优先取依赖的 `module` 字段：jsonc-parser 的 UMD 入口打包后运行时动态 `require` 失败，单元测试测不出来，只有装进 home 才报
 
-写插件读 skill「gwb-devkit」，写文档读「docfirst-docs」。
+写插件读 skill「gwb-devkit」，写文档读「docs-writing」，钉码核对与确认读「docs-site」。
 
 ## 文档
 
