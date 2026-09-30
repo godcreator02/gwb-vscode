@@ -22,13 +22,13 @@ description: vscode.* 各条命令的参数与回执，扩展 HTTP 接口与登�
 `effect`：`vscode.exec` 与 `vscode.browse` 标 `write`，它们在用户开着的窗口里执行命令，任意一条 VS Code 命令都可能改文件或界面；
 `vscode.windows` 与 `vscode.commands` 标 `read`。`vscode.windows` 会顺手删掉进程已不在的登记文件，那是本插件自己数据目录里的登记表，不算改用户的东西。
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.windows'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="32-32" hash="4121d8d93d79" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.exec'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="45-45" hash="68781ffd6741" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.commands'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="65-65" hash="7417a80d5b7f" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.browse'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="84-84" hash="9bf4cd0c0bd5" blob="d73b30b849da" */}
 
 ## 读写工作区文件
 
@@ -43,11 +43,11 @@ description: vscode.* 各条命令的参数与回执，扩展 HTTP 接口与登�
 
 `effect`：`vscode.workspace-file.read` 标 `read`，`add` 与 `remove` 改写工作区文件，标 `write`。
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.read'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="102-102" hash="afae2e7fff74" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.add'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="114-114" hash="b3536752e55c" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.remove'," */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="131-131" hash="e5468ce179a0" blob="d73b30b849da" */}
 
 ## 扩展的 HTTP 接口
 
@@ -75,5 +75,5 @@ description: vscode.* 各条命令的参数与回执，扩展 HTTP 接口与登�
 
 两边各有一份这个形状的定义，插件那份读的时候逐字段校验：
 
-@@docfirst ref ../extension/src/protocol.ts:14-21 @@
-@@docfirst ref ../plugins/vscode/src/windows.ts:36-49 @@
+{/* ref file="../extension/src/protocol.ts" lines="14-21" hash="877446ba1c57" blob="866ca1054573" */}
+{/* ref file="../plugins/vscode/src/windows.ts" lines="36-49" hash="177964d836d3" blob="72ff36e2b20e" */}

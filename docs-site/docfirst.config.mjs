@@ -8,11 +8,10 @@
  * `plugins/vscode/skills/vscode/SKILL.md`（要保留 frontmatter 的 name 与 description，gwb-skills 登记时读它们）。
  * 改正本后运行 `pnpm doc:render`，正本与生成物放进同一个提交。生成正本按原文渲染，里面不能用 JSX 组件。
  */
-import * as fumadocs from '@godcreator/docfirst-workflow/fumadocs'
+import { fumadocsRoster } from '@godcreator/docfirst-workflow/fumadocs/roster'
 import { seamsAsText } from './src/components/vscode-seams.data.mjs'
 
 export default {
-  formats: [fumadocs],
   content: 'content',
   outputs: {
     'content/docs/outputs/readme.mdx': ['../README.md'],
@@ -23,7 +22,7 @@ export default {
     ],
   },
   components: {
-    ...fumadocs.defaultRoster,
+    ...fumadocsRoster,
     VscodeSeams: (node, h) => h.paragraph(seamsAsText()),
   },
 }

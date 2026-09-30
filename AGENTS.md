@@ -27,6 +27,7 @@ gwb 插件 `@godcreator/gwb-vscode`（`plugins/vscode/`）加上配套的 VS Cod
 
 ## 文档
 
-文档站在 `docs-site/`：`pnpm doc` 检查，dev 端口 4313。仓根 README / AGENTS / CLAUDE 与随包说明书
+文档站在 `docs-site/`：`pnpm doc` 检查；看页面先 `pnpm build` 再 `pnpm start`（http://127.0.0.1:4313），不用 `pnpm dev`，改了内容重新 build。
+仓根 README / AGENTS / CLAUDE 与随包说明书
 `plugins/vscode/skills/vscode/SKILL.md` 都是生成物，正本在 `docs-site/content/docs/outputs/`。
 改了被钉的代码，同一个提交里在站目录 `pnpm doc:confirm` 写回、逐条复核剩下的黄灯。

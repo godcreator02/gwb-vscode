@@ -27,17 +27,17 @@ description: gwb-vscode 提供的命令与说明书，注入的服务与 peer �
 
 内核包 `@godcreator/gwb-kernel-desktop`（`^0.10.0`）只提供接口类型。`jsonc-parser` 打包进产物，不是 peer。
 
-{/* has file="../plugins/vscode/src/index.ts" text="export const inject = ['gwbCommands', 'gwbData']" */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="22-22" hash="af1c7e269985" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="ctx.inject(['gwbSkills'], (scoped) => {" */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="147-147" hash="ac0e6b4392d6" blob="d73b30b849da" */}
 
-{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-commands&quot;: &quot;^0.5.6&quot;" */}
+{/* ref file="../plugins/vscode/package.json" lines="31-31" hash="d38869ebe0ad" blob="f5cd1afd2e54" */}
 
-{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-data&quot;: &quot;^0.1.9&quot;" */}
+{/* ref file="../plugins/vscode/package.json" lines="32-32" hash="a19d5c2efcd0" blob="f5cd1afd2e54" */}
 
-{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-skills&quot;: &quot;^0.4.7&quot;" */}
+{/* ref file="../plugins/vscode/package.json" lines="34-34" hash="e9a9c192f97d" blob="f5cd1afd2e54" */}
 
-{/* has file="../plugins/vscode/package.json" text="&quot;@godcreator/gwb-kernel-desktop&quot;: &quot;^0.10.0&quot;" */}
+{/* ref file="../plugins/vscode/package.json" lines="33-33" hash="5c8ad9cb296d" blob="f5cd1afd2e54" */}
 
 ### 按名字调用与约定通道
 
@@ -49,6 +49,6 @@ description: gwb-vscode 提供的命令与说明书，注入的服务与 peer �
 | VS Code 命令 | VS Code 内置 | `simpleBrowser.show` | `vscode.browse` 经 `/exec` 调它 |
 | 磁盘文件 | 人、VS Code | `.code-workspace` | 插件直接改 `folders`，VS Code 察觉变化后刷新 |
 
-{/* has file="../plugins/vscode/src/windows.ts" text="export const WINDOWS_SUBDIR = 'windows'" */}
+{/* ref file="../plugins/vscode/src/windows.ts" lines="9-9" hash="43b55521bbf0" blob="72ff36e2b20e" */}
 
-{/* has file="../plugins/vscode/src/index.ts" text="command: 'simpleBrowser.show'" */}
+{/* ref file="../plugins/vscode/src/index.ts" lines="94-94" hash="e3a3c2e5b21f" blob="d73b30b849da" */}
