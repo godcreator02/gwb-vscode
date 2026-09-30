@@ -1,6 +1,6 @@
 {
   "name": "@godcreator/gwb-vscode",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "VS Code 桥：经配套的 VS Code 扩展，在开着的 VS Code 窗口里执行任意 VS Code 命令、列出命令 ID、在内置浏览器里打开网页；另直接读写 .code-workspace 文件的文件夹列表。命令 7 条；skill 1 份。",
   "type": "module",
   "exports": {
@@ -28,7 +28,7 @@
     "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
   },
   "peerDependencies": {
-    "@godcreator/gwb-commands": "^0.5.6",
+    "@godcreator/gwb-commands": "^0.6.0",
     "@godcreator/gwb-data": "^0.1.9",
     "@godcreator/gwb-kernel-desktop": "^0.10.0",
     "@godcreator/gwb-skills": "^0.4.7"
