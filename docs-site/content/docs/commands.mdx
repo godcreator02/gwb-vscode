@@ -19,6 +19,9 @@ description: vscode.* 各条命令的参数与回执，扩展 HTTP 接口与登�
 
 `vscode.commands` 的子串过滤在插件里做：扩展每次回全部命令 ID（几千条，已去掉下划线开头的内部命令），插件按 `q` 不分大小写过滤。
 
+`effect`：`vscode.exec` 与 `vscode.browse` 标 `write`，它们在用户开着的窗口里执行命令，任意一条 VS Code 命令都可能改文件或界面；
+`vscode.windows` 与 `vscode.commands` 标 `read`。`vscode.windows` 会顺手删掉进程已不在的登记文件，那是本插件自己数据目录里的登记表，不算改用户的东西。
+
 {/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.windows'," */}
 
 {/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.exec'," */}
@@ -37,6 +40,8 @@ description: vscode.* 各条命令的参数与回执，扩展 HTTP 接口与登�
 
 `file` 是 `.code-workspace` 文件的绝对路径。`written` 是文件里写的原文，`absolutePath` 按工作区文件所在目录解析；用 `uri` 登记的条目（远程文件夹之类）
 `written` 与 `absolutePath` 为 `null`、`exists` 为 `false`，只能读、不能按路径移除。移除按解析后的绝对路径比较，Windows 上不分大小写。
+
+`effect`：`vscode.workspace-file.read` 标 `read`，`add` 与 `remove` 改写工作区文件，标 `write`。
 
 {/* has file="../plugins/vscode/src/index.ts" text="name: 'vscode.workspace-file.read'," */}
 
