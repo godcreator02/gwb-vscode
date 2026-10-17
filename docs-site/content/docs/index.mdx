@@ -3,6 +3,8 @@ title: gwb-vscode
 description: 让 gwb 工作台在开着的 VS Code 窗口里执行任意命令、在内置浏览器里打开网页，并直接读写 .code-workspace 文件。本页按接缝讲 gwb 插件、VS Code 扩展、磁盘三者怎么连
 ---
 
+import { VscodeSeams } from './index/vscode-seams'
+
 **本页回答**：这个仓做什么、由哪两个包组成、它们和 agent、VS Code、磁盘之间的每条接缝传什么、由谁负责、怎么测，以及它刻意不做什么。
 
 VS Code 里每个动作——菜单项、快捷键、状态栏按钮、命令面板里的一条——背后都是一条带 ID 的命令，扩展进程里调

@@ -8,7 +8,7 @@
 - `extension/`：VS Code 扩展 `gwb-vscode`。每个窗口开一个 `127.0.0.1` 随机端口与 token，登记到
   `%APPDATA%\gwb-kernel\homes\<home>\data\vscode\windows\<pid>.json`，窗口关闭时删掉
 
-原理、接缝与取舍在文档站 `docs-site/`（`cd docs-site && pnpm dev`，端口 4313）。
+原理、接缝与取舍在文档站 `docs-site/`（god-docsite + docfirst），由 gwb 工作台托管开发服务：`docsite.site.add {"dir":"<站目录>"}`，地址看 `docsite.site.list`。
 
 主仓在 gitea `godcreator/gwb-vscode`，GitHub 上的 `godcreator02/gwb-vscode` 是 gitea 推送镜像同步过去的公开副本，改动只推 gitea。
 插件包是公开包：`devkit.release {"dir":"<仓根>","packages":["plugins/vscode"]}` 先发到 gitea 团队源，再经 GitHub Actions（仓根 `.github/workflows/publish.yml`）发到 npmjs。
